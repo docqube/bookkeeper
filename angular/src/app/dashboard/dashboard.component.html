@@ -1,0 +1,50 @@
+<div class="p-5 flex flex-col space-y-5">
+  <div class="flex flex-row space-x-2 items-center">
+    <button class="w-6 h-6" (click)="moveMonth(-1)">
+      <app-svg-icon class="bg-slate-500 dark:bg-slate-400" [path]="'assets/icons/chevron-left.svg'"></app-svg-icon>
+    </button>
+    <input type="date" class="form-input
+                              bg-gray-100 dark:bg-slate-800
+                              focus:bg-white dark:focus:bg-slate-700
+                              focus:ring-0 focus:border-gray-500 focus:dark:border-slate-500
+                              rounded-md border-transparent"
+                       placeholder=""
+                       [formControl]="startDateFormControl"
+                       (input)="loadData()">
+    <input type="date" class="form-input
+                              bg-gray-100 dark:bg-slate-800
+                              focus:bg-white dark:focus:bg-slate-700
+                              focus:ring-0 focus:border-gray-500 focus:dark:border-slate-500
+                              rounded-md border-transparent"
+                      placeholder=""
+                      [formControl]="endDateFormControl"
+                      (input)="loadData()">
+    <button class="w-6 h-6" (click)="moveMonth(1)">
+      <app-svg-icon class="bg-slate-500 dark:bg-slate-400" [path]="'assets/icons/chevron-right.svg'"></app-svg-icon>
+    </button>
+  </div>
+
+  <div class="flex flex-col md:flex-row
+              space-y-5 md:space-y-0 md:space-x-5">
+    <div class="w-full md:basis-1/2
+                flex flex-col space-y-5">
+      <app-balance-overview [categoryTransactions]="categoryTransactionsSubject" />
+      <div class="flex flex-row justify-end">
+        <input type="file" accept="text/csv" class="hidden" #fileUpload (change)="importFile($event)" />
+        <button (click)="fileUpload.click()"
+                class="bg-green-500 px-4 py-2 rounded text-white font-bold">
+          IMPORTIEREN
+        </button>
+      </div>
+    </div>
+    <app-category-list class="w-full md:basis-1/2"
+                       [categoryTransactions]="categoryTransactionsSubject">
+    </app-category-list>
+  </div>
+
+  <div class="flex flex-col">
+    <app-transaction-list [transactions]="transactionsSubject" [categories]="categories">
+    </app-transaction-list>
+  </div>
+</div>
+

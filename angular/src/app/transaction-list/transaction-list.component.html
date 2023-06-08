@@ -1,0 +1,41 @@
+<div class="bg-slate-100 dark:bg-slate-800
+            rounded
+            overflow-hidden">
+  <div class="flex flex-col space-y-3 w-full">
+    <div *ngFor="let item of datedTransactions | keyvalue; let last = last"
+         class="flex flex-col">
+      <div class="bg-slate-200 dark:bg-slate-700
+                  py-2 px-5">
+        {{ item.value[0].bookingDate | date: 'dd.MM.yyyy' }}
+      </div>
+      <div *ngFor="let transaction of item.value; let last = last"
+           class="flex flex-row
+                  space-x-3
+                  border-slate-200 dark:border-slate-700
+                  p-4"
+           [ngClass]="last ? 'border-b-0' : 'border-b'">
+        <div class="flex flex-col space-y-2 items-start">
+          <div [style.backgroundColor]="transaction.category?.color ? transaction.category?.color + '25' : 'rgba(255,0,0,0.25)'"
+               [style.color]="transaction.category?.color ?? '#ff0000'"
+               class="text-sm font-bold bg-opacity-25 px-3 py-1 rounded">
+            {{ transaction.category?.name ?? '?' }}
+          </div>
+          <div></div>
+          <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
+            <span class="font-semibold">
+              {{ transaction.recipient ?? transaction.purpose }}
+            </span>
+            <span class="text-ellipsis">
+              {{ transaction.purpose ?? '' }}
+            </span>
+          </div>
+        </div>
+        <div class="flex-1"></div>
+        <div class="flex flex-col justify-center">
+          <div class="text-right font-bold whitespace-nowrap">{{ transaction.amount | number: '1.2-2' }} €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

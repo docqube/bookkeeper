@@ -1,0 +1,17 @@
+<div class="bg-slate-100 dark:bg-slate-800
+            rounded
+            flex flex-col">
+  <div *ngFor="let row of dataSource; let last = last"
+       class="flex flex-row
+              space-x-3
+              border-slate-200 dark:border-slate-700
+              p-4
+              font-semibold"
+        [ngClass]="last ? 'border-b-0' : 'border-b'">
+    <div class="w-1 rounded overflow-hidden" [style]="{'background-color': row.category?.color ?? ''}"
+                                  [ngClass]="!row.category ? 'bg-slate-300 dark:bg-slate-600' : ''"></div>
+    <span>{{ row.category?.name ?? 'Nicht zugeordnet' }}</span>
+    <span class="flex-1"></span>
+    <span>{{ row.transactionsSum | number: '1.2-2' }} €</span>
+  </div>
+</div>
