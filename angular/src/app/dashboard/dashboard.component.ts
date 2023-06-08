@@ -44,6 +44,7 @@ export class DashboardComponent {
   loadData(): void {
     this.loaded = false;
     this.error = false;
+
     this.loadCategories();
     this.loadTransactions();
   }
@@ -125,6 +126,24 @@ export class DashboardComponent {
     this.categoryTransactions.sort((a, b) => {
       return Math.abs(b.transactionsSum) - Math.abs(a.transactionsSum);
     });
+
+    const colors: string[] = [
+      "#4f46e5",
+      "#9333ea",
+      "#c026d3",
+      "#ec4899",
+      "#e11d48",
+      "#ea580c",
+      "#d97706",
+      "#eab308",
+    ];
+    this.categoryTransactions.forEach((row, index) => {
+      if (index === 0) { return }
+      if (row.category) {
+        row.category.color = colors[(index-1) % colors.length];
+      }
+    });
+
     this.categoryTransactionsSubject.next(this.categoryTransactions);
   }
 
