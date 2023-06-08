@@ -1,0 +1,20 @@
+Umsatzanzeige;Datei erstellt am: 01.05.2023 00:00
+
+IBAN;DE12 3456 7890 1234 5678 90
+Kontoname;Girokonto
+Bank;ING
+Kunde;Max Muster, Frieda Muster
+Zeitraum;01.04.2023 - 01.05.2023
+Saldo;500,00;EUR
+
+Sortierung;Datum absteigend
+
+In der CSV-Datei finden Sie alle bereits gebuchten Umsätze. Die vorgemerkten Umsätze werden nicht aufgenommen, auch wenn sie in Ihrem Internetbanking angezeigt werden.
+
+Buchung;Valuta;Auftraggeber/Empfänger;Buchungstext;Verwendungszweck;Saldo;Währung;Betrag;Währung
+22.05.2023;22.05.2023;VISA KAUFLAND MONSCHAU 8710;Lastschrift;NR XXXX 0815 MONSCHAU Apple Pay;500,00;EUR;-13,37;EUR
+22.05.2023;22.05.2023;Jan Muster;Überweisung;;513,37;EUR;-29,00;EUR
+22.05.2023;22.05.2023;Max Muster;Gutschrift;;542,37;EUR;150,00;EUR
+22.05.2023;22.05.2023;AUTO BANK AG NL Deutschland;Lastschrift;Auto Leasing/VT12345678 05/23 Rate;392,37;EUR;-69,42;EUR
+22.05.2023;22.05.2023;Telekom Deutschland GmbH;Lastschrift;Mobilfunk Kundenkonto 123456789 RG 9876543210123456789/01.01.2023;461,79;EUR;-25,99;EUR
+19.05.2023;19.05.2023;VISA DM-DROGERIE MARKT;Lastschrift;NR XXXX 1234 MONSCHAU KAUFUMSATZ 01.01 123456789;487,78;EUR;-13,98;EUR
