@@ -39,15 +39,19 @@ func (s *Service) List() ([]Category, error) {
 		var (
 			category       Category
 			rawDescription sql.NullString
+			rawColor       sql.NullString
 		)
 
-		err = rows.Scan(&category.ID, &category.Name, &rawDescription, &category.Color)
+		err = rows.Scan(&category.ID, &category.Name, &rawDescription, &rawColor)
 		if err != nil {
 			return nil, err
 		}
 
 		if rawDescription.Valid {
 			category.Description = &rawDescription.String
+		}
+		if rawColor.Valid {
+			category.Color = &rawColor.String
 		}
 
 		rules, err := s.GetRules(category.ID)

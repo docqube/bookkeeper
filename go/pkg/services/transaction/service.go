@@ -194,12 +194,14 @@ func (s *Service) Get(id int64) (*Transaction, error) {
 
 	if categoryID.Valid {
 		category := category.Category{
-			ID:    categoryID.Int64,
-			Name:  categoryName.String,
-			Color: categoryColor.String,
+			ID:   categoryID.Int64,
+			Name: categoryName.String,
 		}
 		if categoryDescription.Valid {
 			category.Description = &categoryDescription.String
+		}
+		if categoryColor.Valid {
+			category.Color = &categoryColor.String
 		}
 		transaction.Category = &category
 	}
@@ -276,12 +278,14 @@ func (s *Service) List(from, to time.Time) ([]Transaction, error) {
 
 		if categoryID.Valid {
 			category := category.Category{
-				ID:    categoryID.Int64,
-				Name:  categoryName.String,
-				Color: categoryColor.String,
+				ID:   categoryID.Int64,
+				Name: categoryName.String,
 			}
 			if categoryDescription.Valid {
 				category.Description = &categoryDescription.String
+			}
+			if categoryColor.Valid {
+				category.Color = &categoryColor.String
 			}
 			transaction.Category = &category
 		}

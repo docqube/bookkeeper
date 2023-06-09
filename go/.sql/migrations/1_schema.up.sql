@@ -17,7 +17,7 @@ CREATE TABLE public.categories (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  color TEXT NOT NULL
+  color TEXT
 );
 
 CREATE TABLE public.category_rules (
