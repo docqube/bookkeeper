@@ -5,7 +5,7 @@ import { CategoryTransactions, Transaction } from '../transaction/transaction';
 import { CategoryService } from '../category/category.service';
 import { TransactionService } from '../transaction/transaction.service';
 import { FormControl } from '@angular/forms';
-import { Category } from '../category/category';
+import { Category, CategoryColors } from '../category/category';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,9 +23,12 @@ export class DashboardComponent {
 
   categoryTransactionsSubject: Subject<CategoryTransactions[]> = new Subject();
   transactionsSubject: Subject<Transaction[]> = new Subject();
+  categoriesSubject: Subject<Category[]> = new Subject();
 
   startDateFormControl: FormControl = new FormControl<string>(moment().startOf('month').format('YYYY-MM-DD'));
   endDateFormControl: FormControl = new FormControl<string>(moment().endOf('month').format('YYYY-MM-DD'));
+
+  private categoryColorPalette: string[] = CategoryColors;
 
   private ngUnsubscribe: Subject<any> = new Subject();
 
@@ -89,7 +92,6 @@ export class DashboardComponent {
           categoryRowData.transactionsLoaded = true;
 
           if (this.categoryTransactions.filter(row => row.transactionsLoaded).length == this.categoryTransactions.length) {
-            this.loaded = true;
             this.loadUnclassifiedTransactions();
           }
         }
@@ -127,24 +129,25 @@ export class DashboardComponent {
       return Math.abs(b.transactionsSum) - Math.abs(a.transactionsSum);
     });
 
-    const colors: string[] = [
-      "#4f46e5",
-      "#9333ea",
-      "#c026d3",
-      "#ec4899",
-      "#e11d48",
-      "#ea580c",
-      "#d97706",
-      "#eab308",
-    ];
-    this.categoryTransactions.forEach((row, index) => {
-      if (index === 0) { return }
+    let colorIndex = 0;
+    for (let i = 0; i < this.categoryTransactions.length; i++) {
+      const row = this.categoryTransactions[i];
       if (row.category) {
-        row.category.color = colors[(index-1) % colors.length];
+        if (row.category.color) {
+          continue;
+        }
+
+        row.category.color = this.categoryColorPalette[colorIndex % this.categoryColorPalette.length];
+        const categoryIndex = this.categories.findIndex(category => category.id === row.category?.id);
+        if (categoryIndex >= 0) {
+          this.categories[categoryIndex].color = row.category.color;
+        }
+        colorIndex++;
       }
-    });
+    }
 
     this.categoryTransactionsSubject.next(this.categoryTransactions);
+    this.categoriesSubject.next(this.categories);
   }
 
   loadTransactions(): void {

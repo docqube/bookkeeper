@@ -11,8 +11,10 @@ import * as moment from 'moment';
 export class TransactionListComponent {
 
   @Input('transactions') transactionsObservable: Observable<Transaction[]> | undefined;
-  @Input() categories: Category[] | undefined;
+  @Input('categories') categoriesObservable: Observable<Category[]> | undefined;
+
   transactions: Transaction[] = [];
+  categories: Category[] | undefined;
 
   datedTransactions: { [key: string]: Transaction[] } = {};
 
@@ -35,9 +37,29 @@ export class TransactionListComponent {
         this.datedTransactions[dateString].push(transaction);
       }
     });
+
+    this.categoriesObservable?.subscribe((data) => {
+      this.categories = data;
+    });
   }
 
   getCategory(id: number): Category | undefined {
     return this.categories?.find((category) => category.id === id);
+  }
+
+  getCategoryColor(id?: number): string {
+    let color = '#64748b';
+    if (!id) {
+      return color;
+    }
+    const category = this.getCategory(id);
+    if (!category) {
+      return color;
+    }
+
+    if (category.color) {
+      return `${category.color}`;
+    }
+    return color;
   }
 }

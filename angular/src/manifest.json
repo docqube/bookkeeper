@@ -1,0 +1,8 @@
+{
+  "name": "Bookkeeper",
+  "description": "",
+  "start_url": "/",
+  "lang": "de-DE",
+  "display": "standalone",
+  "theme_color": "#22c55e"
+}

@@ -33,7 +33,7 @@
         <input type="file" accept="text/csv" class="hidden" #fileUpload (change)="importFile($event)" />
         <button (click)="fileUpload.click()"
                 class="bg-green-500 px-4 py-2 rounded text-white font-bold">
-          IMPORTIEREN
+          IMPORT
         </button>
       </div>
     </div>
@@ -43,7 +43,7 @@
   </div>
 
   <div class="flex flex-col">
-    <app-transaction-list [transactions]="transactionsSubject" [categories]="categories">
+    <app-transaction-list [transactions]="transactionsSubject" [categories]="categoriesSubject">
     </app-transaction-list>
   </div>
 </div>

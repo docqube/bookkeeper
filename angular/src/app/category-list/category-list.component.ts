@@ -9,16 +9,14 @@ import { Observable } from 'rxjs';
 })
 export class CategoryListComponent {
 
-  @Input() categoryTransactions: Observable<CategoryTransactions[]> | undefined;
-  dataSource: CategoryTransactions[] = [];
-
-  displayedColumns: string[] = ['name', 'amount'];
+  @Input('categoryTransactions') $categoryTransactions: Observable<CategoryTransactions[]> | undefined;
+  categoryTransactions: CategoryTransactions[] = [];
 
   constructor() {}
 
   ngOnInit(): void {
-    this.categoryTransactions?.subscribe((data) => {
-      this.dataSource = data;
+    this.$categoryTransactions?.subscribe((data) => {
+      this.categoryTransactions = data;
     });
   }
 }

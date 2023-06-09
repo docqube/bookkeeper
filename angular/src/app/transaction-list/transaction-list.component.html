@@ -15,10 +15,10 @@
                   p-4"
            [ngClass]="last ? 'border-b-0' : 'border-b'">
         <div class="flex flex-col space-y-2 items-start">
-          <div [style.backgroundColor]="transaction.category?.color ? transaction.category?.color + '25' : 'rgba(255,0,0,0.25)'"
-               [style.color]="transaction.category?.color ?? '#ff0000'"
+          <div [style.backgroundColor]="getCategoryColor(transaction.category?.id) + '25'"
+               [style.color]="getCategoryColor(transaction.category?.id)"
                class="text-sm font-bold bg-opacity-25 px-3 py-1 rounded">
-            {{ transaction.category?.name ?? '?' }}
+            {{ transaction.category?.name ?? 'Not categorized' }}
           </div>
           <div></div>
           <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
