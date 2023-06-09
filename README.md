@@ -28,8 +28,10 @@ automatically assign the categories to the transactions.
 
 #### Mobile
 
-<img alt="Mobile Dashboard (light)" width="350px" src="docs/assets/dashboard_iphone_light.png">
-<img alt="Mobile Dashboard (dark)" width="350px" src="docs/assets/dashboard_iphone_dark.png">
+<div style="display:flex;flex-direction:row">
+  <img alt="Mobile Dashboard (light)" width="350px" src="docs/assets/dashboard_iphone_light.png">
+  <img alt="Mobile Dashboard (dark)" width="350px" src="docs/assets/dashboard_iphone_dark.png">
+</div>
 
 #### Desktop
 
