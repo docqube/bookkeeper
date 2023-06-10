@@ -88,4 +88,4 @@ jobs:
           tags: |
             ghcr.io/docqube/bookkeeper/backend:latest
             ghcr.io/docqube/bookkeeper/backend:${{ env.VERSION }}
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' }}
