@@ -101,7 +101,7 @@ services:
           - postgres
 
   backend:
-    image: ghcr.io/docqube/bookkeeper/api:latest
+    image: ghcr.io/docqube/bookkeeper/backend:latest
     labels:
       - traefik.enable=true
       - "traefik.http.routers.backend.rule=Host(`bookkeeper.example.com`) && PathPrefix(`/api`)"

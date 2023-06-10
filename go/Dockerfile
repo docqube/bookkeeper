@@ -2,7 +2,6 @@ FROM alpine:20230329
 
 ENV DB_HOST="postgres"
 ENV DB_NAME="backkeeper"
-ENV DB_PORT="5432"
 ENV DB_USER="postgres"
 ENV DB_PASSWORD="secr3t"
 

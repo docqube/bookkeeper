@@ -1,20 +1,35 @@
-name: angular
+name: go
 
 on:
   push:
     branches:
       - main
     paths:
-      - ".github/workflows/angular.yaml"
-      - "angular/**"
+      - ".github/workflows/go.yaml"
+      - "go/**"
   pull_request:
     branches:
       - main
     paths:
-      - ".github/workflows/angular.yaml"
-      - "angular/**"
+      - ".github/workflows/go.yaml"
+      - "go/**"
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "go/go.mod"
+
+      - name: run tests
+        run: cd go && make test
+
   build:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
@@ -22,25 +37,23 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - name: setup golang
+        uses: actions/setup-go@v4
         with:
-          node-version: 18
-          cache: yarn
-          cache-dependency-path: "angular/yarn.lock"
+          go-version-file: "go/go.mod"
 
-      - name: build angular app
-        run: |
-          cd angular/
-          yarn install --frozen-lockfile
-          ./node_modules/.bin/ng build --configuration production --progress
-          cp -r src/assets dist/bookkeeper
-          cp -r src/manifest.json dist/bookkeeper
+      - name: build backend
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: cd go && make build
 
       - name: upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: artifact
-          path: angular/dist/bookkeeper/
+          path: go/build/bookkeeper-api
 
   docker:
     runs-on: ubuntu-latest
@@ -53,13 +66,13 @@ jobs:
           fetch-depth: 0
 
       - name: build version string
-        run: echo "VERSION=$(git log -n 1 --no-merges --format=format:%h angular/)" >> $GITHUB_ENV
+        run: echo "VERSION=$(git log -n 1 --no-merges --format=format:%h go/)" >> $GITHUB_ENV
 
       - name: download artifact
         uses: actions/download-artifact@v3
         with:
           name: artifact
-          path: angular/dist/bookkeeper/
+          path: go/build/bookkeeper-api
 
       - name: login to GitHub container registry
         uses: docker/login-action@v2
@@ -71,8 +84,8 @@ jobs:
       - name: build and push image
         uses: docker/build-push-action@v4
         with:
-          context: angular/
+          context: go/
           tags: |
-            ghcr.io/docqube/bookkeeper/frontend:latest
-            ghcr.io/docqube/bookkeeper/frontend:${{ env.VERSION }}
+            ghcr.io/docqube/bookkeeper/backend:latest
+            ghcr.io/docqube/bookkeeper/backend:${{ env.VERSION }}
           push: true
