@@ -34,7 +34,7 @@ jobs:
           yarn install --frozen-lockfile
           ./node_modules/.bin/ng build --configuration production --progress
           cp -r src/assets dist/bookkeeper
-          cp -r manifest.json dist/bookkeeper
+          cp -r src/manifest.json dist/bookkeeper
 
       - name: upload artifact
         uses: actions/upload-artifact@v3.1.2
