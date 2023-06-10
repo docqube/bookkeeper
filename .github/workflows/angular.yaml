@@ -73,6 +73,6 @@ jobs:
         with:
           context: angular/
           tags: |
-            ghcr.io/docqube/bookkeeper-frontend:latest
-            ghcr.io/docqube/bookkeeper-frontend:${{ env.VERSION }}
+            ghcr.io/docqube/bookkeeper/frontend:latest
+            ghcr.io/docqube/bookkeeper/frontend:${{ env.VERSION }}
           push: true
