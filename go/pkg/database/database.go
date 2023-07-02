@@ -2,50 +2,89 @@ package database
 
 import (
 	"database/sql"
-	"flag"
+	"embed"
 	"fmt"
-	"sync"
 	"time"
+
+	"docqube.de/bookkeeper/pkg/config"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
-var (
-	username         = flag.String("db-user", "postgres", "Database username")
-	password         = flag.String("db-password", "postgres", "Database password")
-	host             = flag.String("db-host", "localhost", "Database Host")
-	databaseName     = flag.String("db-name", "bookkeeper", "Database Name")
-	sqlSSL           = flag.Bool("db-ssl", false, "Sets sslmode=disable if false")
-	databaseInstance = make(map[string]*sql.DB, 0)
-	lock             sync.Mutex
-	// PGMaxConnection is the amount of connections that the postgres pool can hold
-	PGMaxConnection = 5
-)
+//go:embed migrations/*.sql
+var migrateFS embed.FS
 
-// GetDBWithName returns a *sql.DB to the given database
-func GetConnection() (*sql.DB, error) {
-	lock.Lock()
-	defer lock.Unlock()
-	if database, ok := databaseInstance[*databaseName]; ok {
-		return database, nil
-	}
-	database, err := sql.Open("postgres", DBConnectionString(*databaseName))
-	// If there was no error, configure and cache the database connection
-	if err == nil {
-		database.SetMaxOpenConns(PGMaxConnection)
-		database.SetMaxIdleConns(PGMaxConnection / 2)
-		databaseInstance[*databaseName] = database
-	}
-	return database, err
-}
+const PGMaxConnections = 5
 
-func DBConnectionString(databaseName string) string {
-	datasource := fmt.Sprintf("postgres://%s:%s@%s/%s?timezone=UTC", *username, *password, *host, databaseName)
-	if !*sqlSSL {
+// buildConnectionString returns a valid PostgreSQL connection string
+// with the passed database configuration.
+func buildConnectionString(config config.DatabaseConfig) string {
+	datasource := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?timezone=UTC",
+		config.User,
+		config.Password,
+		config.Host,
+		config.Port,
+		config.Name,
+	)
+	if config.SSLMode != "" {
 		datasource += "&sslmode=disable"
 	}
 	return datasource
 }
 
+// InitializeDatabase initializes the database connection and performs a database migration.
+// After a successful initialization, the database connection is returned.
+func InitializeDatabase(config *config.Config) (*sql.DB, error) {
+	database, err := sql.Open("postgres", buildConnectionString(config.DatabaseConfig))
+	if err != nil {
+		return nil, err
+	}
+	database.SetMaxOpenConns(PGMaxConnections)
+	database.SetMaxIdleConns(PGMaxConnections / 2)
+
+	err = migrateDatabase(database)
+	if err != nil {
+		return nil, err
+	}
+	return database, nil
+}
+
 // NormalizeTime truncates the Milliseconds and convert the time to UTC
 func NormalizeTime(timestamp time.Time) time.Time {
 	return timestamp.Truncate(time.Millisecond).UTC()
+}
+
+// migrateDatabase performs a database migration with the passed database connection.
+// The migration files are embedded and will be executed in the order of their filenames.
+func migrateDatabase(db *sql.DB) error {
+	sourceInstance, err := iofs.New(migrateFS, "migrations")
+	if err != nil {
+		return err
+	}
+
+	databaseDriver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		return err
+	}
+
+	migration, err := migrate.NewWithInstance(
+		"iofs",
+		sourceInstance,
+		"postgres",
+		databaseDriver,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = migration.Up()
+	if err != nil {
+		if err == migrate.ErrNoChange {
+			return nil
+		}
+		return err
+	}
+	return nil
 }

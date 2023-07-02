@@ -14,13 +14,15 @@ var (
 )
 
 type Service struct {
+	db              *sql.DB
 	categoryService *category.Service
 	categories      []category.Category
 }
 
-func NewService() *Service {
+func NewService(db *sql.DB) *Service {
 	return &Service{
-		categoryService: category.NewService(),
+		db:              db,
+		categoryService: category.NewService(db),
 		categories:      []category.Category{},
 	}
 }
@@ -74,11 +76,6 @@ func (s *Service) Create(transaction Transaction) (*Transaction, error) {
 		return nil, ErrTransactionExists
 	}
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return nil, err
-	}
-
 	var (
 		id         int64
 		categoryID *int64
@@ -93,7 +90,7 @@ func (s *Service) Create(transaction Transaction) (*Transaction, error) {
 		return nil, err
 	}
 
-	err = db.QueryRow(`
+	err = s.db.QueryRow(`
 		INSERT INTO transactions (
 			booking_date,
 			valuta_date,
@@ -135,11 +132,6 @@ func (s *Service) Create(transaction Transaction) (*Transaction, error) {
 }
 
 func (s *Service) Get(id int64) (*Transaction, error) {
-	db, err := database.GetConnection()
-	if err != nil {
-		return nil, err
-	}
-
 	var (
 		transaction         Transaction
 		recipient           sql.NullString
@@ -149,7 +141,7 @@ func (s *Service) Get(id int64) (*Transaction, error) {
 		categoryDescription sql.NullString
 		categoryColor       sql.NullString
 	)
-	err = db.QueryRow(`
+	err := s.db.QueryRow(`
 		SELECT
 			t.id,
 			t.booking_date,
@@ -159,6 +151,7 @@ func (s *Service) Get(id int64) (*Transaction, error) {
 			t.purpose,
 			t.balance,
 			t.amount,
+			t.hidden,
 			c.id,
 			c.name,
 			c.description,
@@ -176,6 +169,7 @@ func (s *Service) Get(id int64) (*Transaction, error) {
 		&purpose,
 		&transaction.Balance,
 		&transaction.Amount,
+		&transaction.Hidden,
 		&categoryID,
 		&categoryName,
 		&categoryDescription,
@@ -209,13 +203,114 @@ func (s *Service) Get(id int64) (*Transaction, error) {
 	return &transaction, nil
 }
 
-func (s *Service) List(from, to time.Time) ([]Transaction, error) {
-	db, err := database.GetConnection()
+func (s *Service) List(from, to time.Time, orderByDirection OrderByDirection) (*TransactionList, error) {
+	rows, err := s.db.Query(fmt.Sprintf(`
+		SELECT
+			t.id,
+			t.booking_date,
+			t.valuta_date,
+			t.recipient,
+			t.booking_text,
+			t.purpose,
+			t.balance,
+			t.amount,
+			t.hidden,
+			c.id,
+			c.name,
+			c.description,
+			c.color
+		FROM transactions AS t
+			LEFT JOIN categories AS c
+			ON t.category_id = c.id
+		WHERE
+			t.booking_date BETWEEN $1 AND $2
+		ORDER BY t.booking_date %s;
+	`, orderByDirection), database.NormalizeTime(from), database.NormalizeTime(to))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []Transaction
+	for rows.Next() {
+		var (
+			transaction         Transaction
+			recipient           sql.NullString
+			purpose             sql.NullString
+			categoryID          sql.NullInt64
+			categoryName        sql.NullString
+			categoryDescription sql.NullString
+			categoryColor       sql.NullString
+		)
+		err = rows.Scan(
+			&transaction.ID,
+			&transaction.BookingDate,
+			&transaction.ValutaDate,
+			&recipient,
+			&transaction.BookingText,
+			&purpose,
+			&transaction.Balance,
+			&transaction.Amount,
+			&transaction.Hidden,
+			&categoryID,
+			&categoryName,
+			&categoryDescription,
+			&categoryColor,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if recipient.Valid {
+			transaction.Recipient = &recipient.String
+		}
+		if purpose.Valid {
+			transaction.Purpose = &purpose.String
+		}
+
+		if categoryID.Valid {
+			category := category.Category{
+				ID:   categoryID.Int64,
+				Name: categoryName.String,
+			}
+			if categoryDescription.Valid {
+				category.Description = &categoryDescription.String
+			}
+			if categoryColor.Valid {
+				category.Color = &categoryColor.String
+			}
+			transaction.Category = &category
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	var transactionList TransactionList
+	transactionList.Items = transactions
+	if len(transactions) == 0 {
+		return &transactionList, nil
+	}
+
+	err = s.db.QueryRow(`
+		SELECT COUNT(*), SUM(amount)
+		FROM transactions AS t
+			LEFT JOIN categories AS c
+			ON t.category_id = c.id
+		WHERE
+			t.booking_date BETWEEN $1 AND $2;
+	`, database.NormalizeTime(from), database.NormalizeTime(to)).Scan(
+		&transactionList.Total,
+		&transactionList.Sum,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := db.Query(`
+	return &transactionList, nil
+}
+
+func (s *Service) ListHidden(from, to time.Time, orderByDirection OrderByDirection) (*TransactionList, error) {
+	rows, err := s.db.Query(fmt.Sprintf(`
 		SELECT
 			t.id,
 			t.booking_date,
@@ -230,17 +325,20 @@ func (s *Service) List(from, to time.Time) ([]Transaction, error) {
 			c.description,
 			c.color
 		FROM transactions AS t
-			LEFT JOIN categories AS c ON t.category_id = c.id
+			LEFT JOIN categories AS c
+			ON t.category_id = c.id
 		WHERE
-			booking_date BETWEEN $1 AND $2
-		ORDER BY booking_date DESC;
-	`, database.NormalizeTime(from), database.NormalizeTime(to))
+			t.booking_date BETWEEN $1 AND $2
+		AND
+			t.hidden = true
+		ORDER BY booking_date %s;
+	`, orderByDirection), database.NormalizeTime(from), database.NormalizeTime(to))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var transactions []Transaction
+	transactions := make([]Transaction, 0)
 	for rows.Next() {
 		var (
 			transaction         Transaction
@@ -293,16 +391,34 @@ func (s *Service) List(from, to time.Time) ([]Transaction, error) {
 		transactions = append(transactions, transaction)
 	}
 
-	return transactions, nil
-}
+	var transactionList TransactionList
+	transactionList.Items = transactions
+	if len(transactions) == 0 {
+		return &transactionList, nil
+	}
 
-func (s *Service) ListByCategoryID(from time.Time, to time.Time, categoryID int64) ([]Transaction, error) {
-	db, err := database.GetConnection()
+	err = s.db.QueryRow(`
+		SELECT COUNT(*), SUM(amount)
+		FROM transactions AS t
+			LEFT JOIN categories AS c
+			ON t.category_id = c.id
+		WHERE
+			t.booking_date BETWEEN $1 AND $2
+		AND
+			t.hidden = true;
+	`, database.NormalizeTime(from), database.NormalizeTime(to)).Scan(
+		&transactionList.Total,
+		&transactionList.Sum,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := db.Query(`
+	return &transactionList, nil
+}
+
+func (s *Service) ListByCategoryID(from time.Time, to time.Time, categoryID int64, orderByDirection OrderByDirection) (*TransactionList, error) {
+	rows, err := s.db.Query(fmt.Sprintf(`
 		SELECT
 			t.id,
 			t.booking_date,
@@ -317,18 +433,22 @@ func (s *Service) ListByCategoryID(from time.Time, to time.Time, categoryID int6
 			c.description,
 			c.color
 		FROM transactions AS t
-			INNER JOIN categories AS c ON t.category_id = c.id
+			INNER JOIN categories AS c
+			ON t.category_id = c.id
 		WHERE
-			booking_date BETWEEN $1 AND $2
-			AND category_id = $3
-		ORDER BY booking_date DESC;
-	`, database.NormalizeTime(from), database.NormalizeTime(to), categoryID)
+			t.booking_date BETWEEN $1 AND $2
+		AND
+			t.category_id = $3
+		AND
+			t.hidden = false
+		ORDER BY t.booking_date %s;
+	`, orderByDirection), database.NormalizeTime(from), database.NormalizeTime(to), categoryID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var transactions []Transaction
+	transactions := make([]Transaction, 0)
 	for rows.Next() {
 		var (
 			transaction         Transaction
@@ -370,16 +490,36 @@ func (s *Service) ListByCategoryID(from time.Time, to time.Time, categoryID int6
 		transactions = append(transactions, transaction)
 	}
 
-	return transactions, nil
+	var transactionList TransactionList
+	transactionList.Items = transactions
+	if len(transactions) == 0 {
+		return &transactionList, nil
+	}
+
+	err = s.db.QueryRow(`
+		SELECT COUNT(*), SUM(amount)
+			FROM transactions AS t
+			INNER JOIN categories AS c
+			ON t.category_id = c.id
+		WHERE
+			t.booking_date BETWEEN $1 AND $2
+		AND
+			t.category_id = $3
+		AND
+			t.hidden = false;
+	`, database.NormalizeTime(from), database.NormalizeTime(to), categoryID).Scan(
+		&transactionList.Total,
+		&transactionList.Sum,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &transactionList, nil
 }
 
 func (s *Service) Categorize(id, categoryID int64) error {
-	db, err := database.GetConnection()
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
+	_, err := s.db.Exec(`
 		UPDATE transactions
 		SET category_id = $1
 		WHERE id = $2;
@@ -391,13 +531,20 @@ func (s *Service) Categorize(id, categoryID int64) error {
 	return nil
 }
 
-func (s *Service) ListUnclassified(from time.Time, to time.Time) ([]Transaction, error) {
-	db, err := database.GetConnection()
+func (s *Service) Hide(id int64, hide bool) error {
+	_, err := s.db.Exec(`
+		UPDATE transactions
+		SET hidden = $1
+		WHERE id = $2;
+	`, hide, id)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	return nil
+}
 
-	rows, err := db.Query(`
+func (s *Service) ListUnclassified(from time.Time, to time.Time, orderByDirection OrderByDirection) (*TransactionList, error) {
+	rows, err := s.db.Query(fmt.Sprintf(`
 		SELECT
 			id,
 			booking_date,
@@ -410,16 +557,18 @@ func (s *Service) ListUnclassified(from time.Time, to time.Time) ([]Transaction,
 		FROM transactions
 		WHERE
 			category_id IS NULL
-			AND
+		AND
 			booking_date BETWEEN $1 AND $2
-		ORDER BY booking_date DESC;
-	`, database.NormalizeTime(from), database.NormalizeTime(to))
+		AND
+			hidden = false
+		ORDER BY booking_date %s;
+	`, orderByDirection), database.NormalizeTime(from), database.NormalizeTime(to))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var transactions []Transaction
+	transactions := make([]Transaction, 0)
 	for rows.Next() {
 		var (
 			transaction Transaction
@@ -450,7 +599,30 @@ func (s *Service) ListUnclassified(from time.Time, to time.Time) ([]Transaction,
 		transactions = append(transactions, transaction)
 	}
 
-	return transactions, nil
+	var transactionList TransactionList
+	transactionList.Items = transactions
+	if len(transactions) == 0 {
+		return &transactionList, nil
+	}
+
+	err = s.db.QueryRow(`
+		SELECT COUNT(*), SUM(amount)
+		FROM transactions
+		WHERE
+			category_id IS NULL
+		AND
+			booking_date BETWEEN $1 AND $2
+		AND
+			hidden = false;
+	`, database.NormalizeTime(from), database.NormalizeTime(to)).Scan(
+		&transactionList.Total,
+		&transactionList.Sum,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &transactionList, nil
 }
 
 func (s *Service) Exists(transaction Transaction) (bool, error) {
@@ -459,13 +631,8 @@ func (s *Service) Exists(transaction Transaction) (bool, error) {
 		return false, err
 	}
 
-	db, err := database.GetConnection()
-	if err != nil {
-		return false, err
-	}
-
 	var exists bool
-	err = db.QueryRow(`
+	err = s.db.QueryRow(`
 		SELECT EXISTS(
 			SELECT 1
 			FROM transactions

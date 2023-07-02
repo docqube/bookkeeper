@@ -3,22 +3,34 @@
     <button class="w-6 h-6" (click)="moveMonth(-1)">
       <app-svg-icon class="bg-slate-500 dark:bg-slate-400" [path]="'assets/icons/chevron-left.svg'"></app-svg-icon>
     </button>
-    <input type="date" class="form-input
-                              bg-gray-100 dark:bg-slate-800
-                              focus:bg-white dark:focus:bg-slate-700
+    <select [formControl]="monthFormControl"
+            (change)="loadData()"
+            class="form-input
+                 bg-gray-100 dark:bg-slate-800
+                 focus:bg-white dark:focus:bg-slate-700
+                   focus:ring-0 focus:border-gray-500 focus:dark:border-slate-500
+                   w-1/2 md:w-36 rounded-md border-transparent">
+      <option value="0">January</option>
+      <option value="1">February</option>
+      <option value="2">March</option>
+      <option value="3">April</option>
+      <option value="4">May</option>
+      <option value="5">June</option>
+      <option value="6">July</option>
+      <option value="7">August</option>
+      <option value="8">September</option>
+      <option value="9">Oktober</option>
+      <option value="10">November</option>
+      <option value="11">December</option>
+    </select>
+    <input type="year" class="form-input
+                            bg-gray-100 dark:bg-slate-800
+                            focus:bg-white dark:focus:bg-slate-700
                               focus:ring-0 focus:border-gray-500 focus:dark:border-slate-500
-                              rounded-md border-transparent"
-                       placeholder=""
-                       [formControl]="startDateFormControl"
-                       (input)="loadData()">
-    <input type="date" class="form-input
-                              bg-gray-100 dark:bg-slate-800
-                              focus:bg-white dark:focus:bg-slate-700
-                              focus:ring-0 focus:border-gray-500 focus:dark:border-slate-500
-                              rounded-md border-transparent"
-                      placeholder=""
-                      [formControl]="endDateFormControl"
-                      (input)="loadData()">
+                              w-1/2 md:w-36 rounded-md border-transparent"
+                        placeholder=""
+                        [formControl]="yearFormControl"
+                        (input)="loadData()">
     <button class="w-6 h-6" (click)="moveMonth(1)">
       <app-svg-icon class="bg-slate-500 dark:bg-slate-400" [path]="'assets/icons/chevron-right.svg'"></app-svg-icon>
     </button>
@@ -28,7 +40,7 @@
               space-y-5 md:space-y-0 md:space-x-5">
     <div class="w-full md:basis-1/2
                 flex flex-col space-y-5">
-      <app-balance-overview [categoryTransactions]="categoryTransactionsSubject" />
+      <app-balance-overview [categoryTransactions]="$categoryTransactions" />
       <div class="flex flex-row justify-end">
         <input type="file" accept="text/csv" class="hidden" #fileUpload (change)="importFile($event)" />
         <button (click)="fileUpload.click()"
@@ -38,12 +50,14 @@
       </div>
     </div>
     <app-category-list class="w-full md:basis-1/2"
-                       [categoryTransactions]="categoryTransactionsSubject">
+                       [categoryTransactions]="$categoryTransactions">
     </app-category-list>
   </div>
 
   <div class="flex flex-col">
-    <app-transaction-list [transactions]="transactionsSubject" [categories]="categoriesSubject">
+    <app-transaction-list [transactions]="$transactions"
+                          [categories]="$categories"
+                          (transactionChanged)="handleTransactionChange($event)">
     </app-transaction-list>
   </div>
 </div>

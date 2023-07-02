@@ -48,21 +48,15 @@ PostgreSQL instance as a datastore for the API, it is recommended to use a docke
 
 ### API Environment Variables
 
-#### `DB_HOST`
-
-The hostname of the PostgreSQL instance.
-
-#### `DB_NAME`
-
-The name of the database to use.
-
-#### `DB_USER`
-
-The username to use for the database connection.
-
-#### `DB_PASSWORD`
-
-The password to use for the database connection.
+| Name | Description | Default | Required |
+|---|---|---|---|
+| `BOOKKEEPER_PORT` | Port of the HTTP server | `8080` | ❌ |
+| `BOOKKEEPER_DATABASE_HOST` | Hostname of the PostgreSQL database | - | ✅ |
+| `BOOKKEEPER_DATABASE_PORT` | Port of the PostgreSQL database | - | ✅ |
+| `BOOKKEEPER_DATABASE_USERNAME` | Username used to connect to PostgreSQL database | - | ✅ |
+| `BOOKKEEPER_DATABASE_PASSWORD` | Password used to connect to PostgreSQL database | - | ✅ |
+| `BOOKKEEPER_DATABASE_NAME` | Used PostgreSQL database name | - | ✅ |
+| `BOOKKEEPER_DATABASE_SSLMODE` | Used PostgreSQL SSL mode (e.g. `"disabled"` if running on localhost) | - | ❌ |
 
 ### Docker Compose Setup
 
@@ -89,7 +83,7 @@ services:
           - traefik
 
   postgres:
-    image: postgres:14
+    image: postgres:15
     environment:
       - POSTGRES_DB=bookkeeper
       - POSTGRES_USER=bookkeeper
@@ -107,10 +101,11 @@ services:
       - "traefik.http.routers.backend.rule=Host(`bookkeeper.example.com`) && PathPrefix(`/api`)"
       - traefik.http.services.backend.loadbalancer.server.port=8080
     environment:
-      - DB_HOST=postgres
-      - DB_NAME=bookkeeper
-      - DB_USER=bookeeper
-      - DB_PASSWORD=s3cr3t
+      - BOOKKEEPER_DATABASE_HOST=postgres
+      - BOOKKEEPER_DATABASE_PORT=5432
+      - BOOKKEEPER_DATABASE_NAME=bookkeeper
+      - BOOKKEEPER_DATABASE_USER=bookeeper
+      - BOOKKEEPER_DATABASE_PASSWORD=s3cr3t
     expose:
       - "8080"
     restart: always

@@ -5,6 +5,7 @@ import { SharedModule } from '../shared/shared.module';
 import { CategoryListComponent } from '../category-list/category-list.component';
 import { TransactionListComponent } from '../transaction-list/transaction-list.component';
 import { BalanceOverviewComponent } from '../balance-overview/balance-overview.component';
+import { TransactionComponent } from '../transaction/transaction.component';
 
 @NgModule({
   imports: [
@@ -15,6 +16,7 @@ import { BalanceOverviewComponent } from '../balance-overview/balance-overview.c
     DashboardComponent,
     CategoryListComponent,
     TransactionListComponent,
+    TransactionComponent,
     BalanceOverviewComponent,
   ],
   exports: [

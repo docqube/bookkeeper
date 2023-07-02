@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,14 +15,15 @@ type Handler struct {
 	Service *transaction.Service
 }
 
-func NewHandler(router *gin.RouterGroup) *Handler {
+func NewHandler(router *gin.RouterGroup, db *sql.DB) *Handler {
 	handler := &Handler{
-		Service: &transaction.Service{},
+		Service: transaction.NewService(db),
 	}
 
 	transactionsAPI := router.Group("/transactions")
 	transactionsAPI.POST("/csv", handler.ImportCSV)
 	transactionsAPI.GET("/unclassified", handler.ListUnclassified)
+	transactionsAPI.GET("/hidden", handler.ListHidden)
 	transactionsAPI.GET("", handler.List)
 
 	transactionAPI := router.Group("/transaction")
@@ -60,25 +62,12 @@ func (h *Handler) ImportCSV(c *gin.Context) {
 }
 
 func (h *Handler) List(c *gin.Context) {
-	fromString := c.Query("from")
-	if fromString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "from is required"})
-		return
-	}
-
-	toString := c.Query("to")
-	if toString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "to is required"})
-		return
-	}
-
-	from, err := time.Parse(time.DateOnly, fromString)
+	from, err := time.Parse(time.DateOnly, c.Query("from"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	to, err := time.Parse(time.DateOnly, toString)
+	to, err := time.Parse(time.DateOnly, c.Query("to"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -92,7 +81,7 @@ func (h *Handler) List(c *gin.Context) {
 			return
 		}
 
-		transactions, err := h.Service.ListByCategoryID(from, to, categoryID)
+		transactions, err := h.Service.ListByCategoryID(from, to, categoryID, transaction.OrderByDirectionAsc)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -101,7 +90,7 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	transactions, err := h.Service.List(from, to)
+	transactions, err := h.Service.List(from, to, transaction.OrderByDirectionAsc)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -110,31 +99,40 @@ func (h *Handler) List(c *gin.Context) {
 }
 
 func (h *Handler) ListUnclassified(c *gin.Context) {
-	fromString := c.Query("from")
-	if fromString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "from is required"})
-		return
-	}
-
-	toString := c.Query("to")
-	if toString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "to is required"})
-		return
-	}
-
-	from, err := time.Parse(time.DateOnly, fromString)
+	from, err := time.Parse(time.DateOnly, c.Query("from"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	to, err := time.Parse(time.DateOnly, toString)
+	to, err := time.Parse(time.DateOnly, c.Query("to"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	transactions, err := h.Service.ListUnclassified(from, to)
+	transactions, err := h.Service.ListUnclassified(from, to, transaction.OrderByDirectionAsc)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, transactions)
+}
+
+func (h *Handler) ListHidden(c *gin.Context) {
+	from, err := time.Parse(time.DateOnly, c.Query("from"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	to, err := time.Parse(time.DateOnly, c.Query("to"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	transactions, err := h.Service.ListHidden(from, to, transaction.OrderByDirectionAsc)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -149,7 +147,7 @@ func (h *Handler) Patch(c *gin.Context) {
 		return
 	}
 
-	var patchRequest transaction.TransactionRequest
+	var patchRequest transaction.TransactionPatchRequest
 	err = c.BindJSON(&patchRequest)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -158,6 +156,13 @@ func (h *Handler) Patch(c *gin.Context) {
 
 	if patchRequest.CategoryID != nil {
 		err = h.Service.Categorize(id, *patchRequest.CategoryID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	if patchRequest.Hidden != nil {
+		err = h.Service.Hide(id, *patchRequest.Hidden)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
