@@ -1,5 +1,5 @@
 angular-build:
-  image: node:18
+  image: node:20
   script:
     - cd angular
     - yarn install --frozen-lockfile
