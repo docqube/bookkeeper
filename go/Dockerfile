@@ -14,7 +14,6 @@ RUN apk add -U --no-cache bash ca-certificates openssl
 EXPOSE 8080
 
 COPY build/bookkeeper-api bookkeeper-api
-COPY .sql/ .sql/
 RUN chmod +x bookkeeper-api
 
 CMD ["/bin/bash", "-c", "./bookkeeper-api"]
