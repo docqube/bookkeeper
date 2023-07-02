@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Transaction } from '../transaction/transaction';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { Category } from '../category/category';
 import * as moment from 'moment';
 
@@ -10,18 +10,22 @@ import * as moment from 'moment';
 })
 export class TransactionListComponent {
 
-  @Input('transactions') transactionsObservable: Observable<Transaction[]> | undefined;
-  @Input('categories') categoriesObservable: Observable<Category[]> | undefined;
+  @Input('transactions') $transactions: Observable<Transaction[]>;
+  @Input('categories') $categories: Observable<Category[]>;
+
+  @Output() transactionChanged: EventEmitter<Transaction> = new EventEmitter();
 
   transactions: Transaction[] = [];
-  categories: Category[] | undefined;
+  categories: Category[];
 
   datedTransactions: { [key: string]: Transaction[] } = {};
+
+  private ngUnsubscribe: Subject<any> = new Subject();
 
   constructor() {}
 
   ngOnInit(): void {
-    this.transactionsObservable?.subscribe((data) => {
+    this.$transactions?.subscribe((data) => {
       this.transactions = data;
 
       if (!this.transactions) {
@@ -38,9 +42,16 @@ export class TransactionListComponent {
       }
     });
 
-    this.categoriesObservable?.subscribe((data) => {
-      this.categories = data;
-    });
+    this.$categories?.
+      pipe(takeUntil(this.ngUnsubscribe)).
+      subscribe((data) => {
+        this.categories = data;
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.ngUnsubscribe.next(null);
+    this.ngUnsubscribe.complete();
   }
 
   getCategory(id: number): Category | undefined {
@@ -61,5 +72,9 @@ export class TransactionListComponent {
       return `${category.color}`;
     }
     return color;
+  }
+
+  handleTransactionChange(transaction: Transaction): void {
+    this.transactionChanged.emit(transaction);
   }
 }

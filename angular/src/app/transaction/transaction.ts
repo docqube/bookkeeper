@@ -11,6 +11,13 @@ export interface Transaction {
   balance: number;
   amount: number;
   category?: Category;
+  hidden: boolean;
+}
+
+export interface TransactionList {
+  items: Transaction[];
+  total: number;
+  sum: number;
 }
 
 export interface TransactionRequest {
@@ -26,7 +33,5 @@ export interface TransactionRequest {
 
 export interface CategoryTransactions {
   category?: Category;
-  transactions: Transaction[];
-  transactionsSum: number;
-  transactionsLoaded: boolean;
+  transactionList: TransactionList;
 }

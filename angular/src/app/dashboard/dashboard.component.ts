@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import * as moment from 'moment';
-import { Subject, takeUntil } from 'rxjs';
-import { CategoryTransactions, Transaction } from '../transaction/transaction';
+import { Observable, Subject, combineLatest, forkJoin, merge, takeUntil } from 'rxjs';
+import { CategoryTransactions, Transaction, TransactionList } from '../transaction/transaction';
 import { CategoryService } from '../category/category.service';
 import { TransactionService } from '../transaction/transaction.service';
 import { FormControl } from '@angular/forms';
 import { Category, CategoryColors } from '../category/category';
+import { IntervalService } from '../interval/interval.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,19 +22,22 @@ export class DashboardComponent {
   transactions: Transaction[] = [];
   categories: Category[] = [];
 
-  categoryTransactionsSubject: Subject<CategoryTransactions[]> = new Subject();
-  transactionsSubject: Subject<Transaction[]> = new Subject();
-  categoriesSubject: Subject<Category[]> = new Subject();
+  $categoryTransactions: Subject<CategoryTransactions[]> = new Subject();
+  $transactions: Subject<Transaction[]> = new Subject();
+  $categories: Subject<Category[]> = new Subject();
 
-  startDateFormControl: FormControl = new FormControl<string>(moment().startOf('month').format('YYYY-MM-DD'));
-  endDateFormControl: FormControl = new FormControl<string>(moment().endOf('month').format('YYYY-MM-DD'));
+  monthFormControl: FormControl = new FormControl<number>(moment().month());
+  yearFormControl: FormControl = new FormControl<number>(moment().year());
+  startDate: Date = moment().startOf('month').toDate();
+  endDate: Date = this.startDate;
 
   private categoryColorPalette: string[] = CategoryColors;
 
   private ngUnsubscribe: Subject<any> = new Subject();
 
   constructor(private categoryService: CategoryService,
-              private transactionService: TransactionService) {}
+              private transactionService: TransactionService,
+              private intervalService: IntervalService) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -48,8 +52,21 @@ export class DashboardComponent {
     this.loaded = false;
     this.error = false;
 
-    this.loadCategories();
-    this.loadTransactions();
+    this.intervalService.getFiscalMonth(this.monthFormControl.value + 1, this.yearFormControl.value, 1)
+      .pipe(takeUntil(this.ngUnsubscribe))
+      .subscribe({
+        next: (fiscalMonth) => {
+          this.startDate = fiscalMonth.start;
+          this.endDate = fiscalMonth.end;
+
+          this.loadCategories();
+          this.loadTransactions();
+        },
+        error: (err) => {
+          this.loaded = true;
+          this.error = true;
+        }
+      });
   }
 
   loadCategories(): void {
@@ -59,15 +76,31 @@ export class DashboardComponent {
       .subscribe({
         next: (categories) => {
           this.categories = categories;
+
+          const transactionRequests: Observable<TransactionList>[] = [];
           for (const category of categories) {
-            this.categoryTransactions.push({
-              category: category,
-              transactions: [],
-              transactionsSum: 0,
-              transactionsLoaded: true
-            });
-            this.loadTransactionsForCategory(category.id);
+            transactionRequests.push(this.transactionService.listForCategoryID(this.startDate, this.endDate, category.id));
           }
+          transactionRequests.push(this.transactionService.listUnclassified(this.startDate, this.endDate));
+
+          combineLatest(transactionRequests)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe({
+              next: (transactionLists) => {
+                for (let i = 0; i < transactionLists.length; i++) {
+                  let category: Category | undefined = undefined;
+                  if (i < categories.length) {
+                    category = categories[i];
+                  }
+                  this.categoryTransactions.push({
+                    category: category,
+                    transactionList: transactionLists[i]
+                  });
+                }
+
+                this.emitCategoryTransactions();
+              }
+            });
         },
         error: (err) => {
           this.loaded = true;
@@ -76,57 +109,9 @@ export class DashboardComponent {
       });
   }
 
-  loadTransactionsForCategory(categoryID: number): void {
-    this.transactionService.listForCategoryID(this.startDateFormControl.value, this.endDateFormControl.value, categoryID)
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe({
-        next: (transactions) => {
-          if (!transactions) {
-            return;
-          }
-          const categoryRowData = this.categoryTransactions.find(row => row.category?.id === categoryID);
-          if (!categoryRowData) {
-            return;
-          }
-          categoryRowData.transactionsSum = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-          categoryRowData.transactionsLoaded = true;
-
-          if (this.categoryTransactions.filter(row => row.transactionsLoaded).length == this.categoryTransactions.length) {
-            this.loadUnclassifiedTransactions();
-          }
-        }
-      });
-  }
-
-  loadUnclassifiedTransactions(): void {
-    this.transactionService.listUnclassified(this.startDateFormControl.value, this.endDateFormControl.value)
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe({
-        next: (transactions) => {
-          if (!transactions) {
-            return;
-          }
-          let categoryRowData = this.categoryTransactions.find(row => !row.category);
-          if (!categoryRowData) {
-            categoryRowData = {
-              category: undefined,
-              transactions: [],
-              transactionsSum: 0,
-              transactionsLoaded: true
-            };
-            this.categoryTransactions.push(categoryRowData);
-          }
-          categoryRowData.transactionsSum = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-          categoryRowData.transactionsLoaded = true;
-
-          this.emitCategoryTransactions();
-        }
-      });
-  }
-
   emitCategoryTransactions(): void {
     this.categoryTransactions.sort((a, b) => {
-      return Math.abs(b.transactionsSum) - Math.abs(a.transactionsSum);
+      return Math.abs(b.transactionList.sum) - Math.abs(a.transactionList.sum);
     });
 
     let colorIndex = 0;
@@ -146,17 +131,19 @@ export class DashboardComponent {
       }
     }
 
-    this.categoryTransactionsSubject.next(this.categoryTransactions);
-    this.categoriesSubject.next(this.categories);
+    console.log(this.categoryTransactions);
+
+    this.$categoryTransactions.next(this.categoryTransactions);
+    this.$categories.next(this.categories);
   }
 
   loadTransactions(): void {
-    this.transactionService.list(this.startDateFormControl.value, this.endDateFormControl.value)
+    this.transactionService.list(this.startDate, this.endDate)
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe({
-        next: (transactions) => {
-          this.transactions = transactions;
-          this.transactionsSubject.next(this.transactions);
+        next: (list) => {
+          this.transactions = list.items;
+          this.$transactions.next(this.transactions);
         }
       });
   }
@@ -176,8 +163,16 @@ export class DashboardComponent {
   }
 
   moveMonth(count: number): void {
-    this.startDateFormControl.setValue(moment(this.startDateFormControl.value).add(count, 'month').startOf('month').format('YYYY-MM-DD'));
-    this.endDateFormControl.setValue(moment(this.endDateFormControl.value).add(count, 'month').endOf('month').format('YYYY-MM-DD'));
+    const newMonth = moment().set({
+      'month': this.monthFormControl.value,
+      'year': this.yearFormControl.value
+    }).add(count, 'month');
+    this.monthFormControl.setValue(newMonth.month());
+    this.yearFormControl.setValue(newMonth.year());
     this.loadData();
+  }
+
+  handleTransactionChange(transaction: Transaction): void {
+    this.loadCategories();
   }
 }

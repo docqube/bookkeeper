@@ -1,0 +1,52 @@
+<div class="flex flex-row
+            space-x-3 p-4">
+  <div class="flex flex-col space-y-2 items-start">
+    <div class="flex flex-row space-x-2 items-center">
+      <button class="w-6 h-6" (click)="hide(!transaction.hidden)">
+        <app-svg-icon class="bg-slate-500"
+                      [path]="transaction.hidden ? 'assets/icons/eye.svg' : 'assets/icons/eye-slash.svg'">
+        </app-svg-icon>
+      </button>
+      <div [style.backgroundColor]="getCategoryColor(transaction.category?.id) + '25'"
+          [style.color]="getCategoryColor(transaction.category?.id)"
+          class="text-sm font-bold bg-opacity-25 px-3 py-1 rounded"
+          (click)="editMode = true"
+          *ngIf="!editMode">
+        {{ transaction.category?.name ?? 'Not categorized' }}
+      </div>
+      <div *ngIf="editMode"
+           class="flex flex-row space-x-2 items-center">
+        <select [formControl]="categoryFormControl"
+                class="form-input
+                    bg-gray-200 dark:bg-slate-700
+                    focus:bg-white dark:focus:bg-slate-600
+                      focus:ring-0 focus:border-gray-500 focus:dark:border-slate-500
+                      rounded-md border-transparent">
+          <option value="0" selected>None</option>
+          <option *ngFor="let category of categories"
+                  [value]="category.id">
+            {{ category.name }}
+          </option>
+        </select>
+        <button class="w-6 h-6" (click)="setCategory()">
+          <app-svg-icon class="bg-green-500" [path]="'assets/icons/check.svg'"></app-svg-icon>
+        </button>
+      </div>
+    </div>
+    <div></div>
+    <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4"
+         [ngClass]="transaction.hidden ? 'line-through' : ''">
+      <span class="font-semibold">
+        {{ transaction.recipient ?? transaction.purpose }}
+      </span>
+      <span class="text-ellipsis">
+        {{ transaction.purpose ?? '' }}
+      </span>
+    </div>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex flex-col justify-center"
+       [ngClass]="transaction.hidden ? 'line-through' : ''">
+    <div class="text-right font-bold whitespace-nowrap">{{ transaction.amount | number: '1.2-2' }} €</div>
+  </div>
+</div>

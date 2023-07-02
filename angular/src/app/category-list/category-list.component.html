@@ -12,6 +12,6 @@
                                              [ngClass]="!row.category ? 'bg-slate-300 dark:bg-slate-600' : ''"></div>
     <span>{{ row.category?.name ?? 'Not categorized' }}</span>
     <span class="flex-1"></span>
-    <span>{{ row.transactionsSum | number: '1.2-2' }} €</span>
+    <span>{{ row.transactionList.sum | number: '1.2-2' }} €</span>
   </div>
 </div>

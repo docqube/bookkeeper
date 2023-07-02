@@ -9,31 +9,11 @@
         {{ item.value[0].bookingDate | date: 'dd.MM.yyyy' }}
       </div>
       <div *ngFor="let transaction of item.value; let last = last"
-           class="flex flex-row
-                  space-x-3
-                  border-slate-200 dark:border-slate-700
-                  p-4"
+           class="border-slate-200 dark:border-slate-700"
            [ngClass]="last ? 'border-b-0' : 'border-b'">
-        <div class="flex flex-col space-y-2 items-start">
-          <div [style.backgroundColor]="getCategoryColor(transaction.category?.id) + '25'"
-               [style.color]="getCategoryColor(transaction.category?.id)"
-               class="text-sm font-bold bg-opacity-25 px-3 py-1 rounded">
-            {{ transaction.category?.name ?? 'Not categorized' }}
-          </div>
-          <div></div>
-          <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-            <span class="font-semibold">
-              {{ transaction.recipient ?? transaction.purpose }}
-            </span>
-            <span class="text-ellipsis">
-              {{ transaction.purpose ?? '' }}
-            </span>
-          </div>
-        </div>
-        <div class="flex-1"></div>
-        <div class="flex flex-col justify-center">
-          <div class="text-right font-bold whitespace-nowrap">{{ transaction.amount | number: '1.2-2' }} €</div>
-        </div>
+        <app-transaction [transaction]="transaction"
+                         [categories]="$categories"
+                         (transactionChanged)="handleTransactionChange($event)"></app-transaction>
       </div>
     </div>
   </div>
