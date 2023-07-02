@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 
 	"docqube.de/bookkeeper/pkg/services/category"
@@ -11,8 +12,10 @@ type Handler struct {
 	service *category.Service
 }
 
-func NewHandler(router *gin.RouterGroup) *Handler {
-	handler := &Handler{}
+func NewHandler(router *gin.RouterGroup, db *sql.DB) *Handler {
+	handler := &Handler{
+		service: category.NewService(db),
+	}
 
 	categoriesAPI := router.Group("/categories")
 	categoriesAPI.GET("", handler.List)

@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"sync"
 	"time"
-
-	"docqube.de/bookkeeper/pkg/database"
 )
 
 var (
@@ -14,18 +12,18 @@ var (
 	categoryLastSync   time.Time
 )
 
-type Service struct{}
+type Service struct {
+	db *sql.DB
+}
 
-func NewService() *Service {
-	return &Service{}
+func NewService(db *sql.DB) *Service {
+	return &Service{
+		db: db,
+	}
 }
 
 func (s *Service) List() ([]Category, error) {
-	db, err := database.GetConnection()
-	if err != nil {
-		return nil, err
-	}
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT id, name, description, color
 		FROM categories;
 	`)
@@ -67,11 +65,7 @@ func (s *Service) List() ([]Category, error) {
 }
 
 func (s *Service) GetRules(categoryID int64) ([]CategoryRule, error) {
-	db, err := database.GetConnection()
-	if err != nil {
-		return nil, err
-	}
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT id, category_id, regex, mapping_field, description
 		FROM category_rules
 		WHERE category_id = $1;
