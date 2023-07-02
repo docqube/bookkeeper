@@ -1,0 +1,2 @@
+ALTER TABLE public.transactions
+  ADD COLUMN hidden BOOLEAN NOT NULL DEFAULT FALSE;
