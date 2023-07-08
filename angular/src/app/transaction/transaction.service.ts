@@ -44,7 +44,7 @@ export class TransactionService {
     return this.http.post('/api/v1/transactions/csv', formData);
   }
 
-  setCategory(transactionID: number, categoryID: number | null): Observable<any> {
+  setCategory(transactionID: number, categoryID: number): Observable<any> {
     return this.http.patch(`/api/v1/transaction/${transactionID}`, {
       categoryID: categoryID
     });

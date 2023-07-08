@@ -32,7 +32,13 @@ export class TransactionComponent {
       });
 
     this.categoryFormControl.setValue(this.transaction.category?.id ?? 0);
-  }
+
+    this.categoryFormControl.valueChanges
+      .pipe(takeUntil(this.ngUnsubscribe))
+      .subscribe(() => {
+        this.setCategory();
+      });
+    }
 
   ngOnDestroy(): void {
     this.ngUnsubscribe.next(null);
@@ -62,7 +68,7 @@ export class TransactionComponent {
   setCategory(): void {
     const category = this.categories?.find((category) => category.id == this.categoryFormControl.value);
     this.transaction.category = category;
-    this.transactionService.setCategory(this.transaction.id, category?.id ?? null)
+    this.transactionService.setCategory(this.transaction.id, category?.id ?? 0)
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe({
         next: () => {

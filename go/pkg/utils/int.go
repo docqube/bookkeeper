@@ -6,3 +6,7 @@ func Abs(x int) int {
 	}
 	return x
 }
+
+func NewInt64(i int64) *int64 {
+	return &i
+}

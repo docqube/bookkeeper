@@ -527,7 +527,18 @@ func (s *Service) Categorize(id, categoryID int64) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
+func (s *Service) Uncategorize(id int64) error {
+	_, err := s.db.Exec(`
+		UPDATE transactions
+		SET category_id = NULL
+		WHERE id = $1;
+	`, id)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
