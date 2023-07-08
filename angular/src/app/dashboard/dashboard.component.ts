@@ -131,8 +131,6 @@ export class DashboardComponent {
       }
     }
 
-    console.log(this.categoryTransactions);
-
     this.$categoryTransactions.next(this.categoryTransactions);
     this.$categories.next(this.categories);
   }

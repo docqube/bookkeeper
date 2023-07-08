@@ -8,6 +8,7 @@ import (
 
 	"docqube.de/bookkeeper/pkg/services/transaction"
 	"docqube.de/bookkeeper/pkg/services/transaction/csv"
+	"docqube.de/bookkeeper/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -155,10 +156,18 @@ func (h *Handler) Patch(c *gin.Context) {
 	}
 
 	if patchRequest.CategoryID != nil {
-		err = h.Service.Categorize(id, *patchRequest.CategoryID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+		if patchRequest.CategoryID == utils.NewInt64(0) {
+			err = h.Service.Uncategorize(id)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		} else {
+			err = h.Service.Categorize(id, *patchRequest.CategoryID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 		}
 	}
 	if patchRequest.Hidden != nil {

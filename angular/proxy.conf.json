@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "https://bookkeeper.home.docqube.de",
+    "target": "http://localhost:8080",
     "changeOrigin": true,
     "ws": true
   }
