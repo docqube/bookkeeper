@@ -62,7 +62,7 @@ jobs:
           path: angular/dist/bookkeeper/
 
       - name: login to GitHub container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
