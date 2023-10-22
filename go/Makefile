@@ -59,6 +59,12 @@ build:
 run:
 	go run ./cmd/api/main.go
 
+.PHONY: update
+update:
+	go get -u ./...
+	$(MAKE) tidy
+	$(MAKE) vendor
+
 
 ######################################################
 # lint
