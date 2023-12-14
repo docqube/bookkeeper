@@ -50,7 +50,7 @@ jobs:
         run: cd go && make build
 
       - name: upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifact
           path: go/build/bookkeeper-api

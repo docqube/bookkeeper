@@ -37,7 +37,7 @@ jobs:
           cp -r src/manifest.json dist/bookkeeper
 
       - name: upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifact
           path: angular/dist/bookkeeper/
