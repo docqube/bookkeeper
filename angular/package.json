@@ -19,7 +19,7 @@
     "@angular/platform-browser-dynamic": "16.2.12",
     "@angular/router": "16.2.12",
     "@tailwindcss/forms": "0.5.7",
-    "autoprefixer": "10.4.16",
+    "autoprefixer": "10.4.19",
     "moment": "2.29.4",
     "postcss": "8.4.31",
     "rxjs": "7.8.1",
