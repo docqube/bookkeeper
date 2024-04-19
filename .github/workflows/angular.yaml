@@ -37,7 +37,7 @@ jobs:
           cp -r src/manifest.json dist/bookkeeper
 
       - name: upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifact
           path: angular/dist/bookkeeper/
@@ -56,7 +56,7 @@ jobs:
         run: echo "VERSION=$(git log -n 1 --no-merges --format=format:%h angular/)" >> $GITHUB_ENV
 
       - name: download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifact
           path: angular/dist/bookkeeper/
