@@ -1,7 +1,0 @@
-variables:
-  REGISTRY_URL: "docker.docqube.de"
-  PROJECT_GROUP: "florian/bookkeeper"
-
-include:
-  - 'angular/.gitlab-ci.yml'
-  - 'go/.gitlab-ci.yml'
