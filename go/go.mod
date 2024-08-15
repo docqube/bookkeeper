@@ -11,7 +11,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/text v0.16.0
+	golang.org/x/text v0.17.0
 )
 
 require (
