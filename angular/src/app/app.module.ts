@@ -6,30 +6,24 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SharedModule } from './shared/shared.module';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import * as de from '@angular/common/locales/de';
 import { registerLocaleData } from '@angular/common';
 
-@NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
-    SharedModule.forRoot(),
-    BrowserModule,
-    HttpClientModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
-    DashboardModule
-  ],
-  providers: [
-    {
-      provide: LOCALE_ID,
-      useValue: 'de-DE'
-    },
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent
+    ],
+    bootstrap: [AppComponent], imports: [SharedModule.forRoot(),
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        DashboardModule], providers: [
+        {
+            provide: LOCALE_ID,
+            useValue: 'de-DE'
+        },
+        provideHttpClient(withInterceptorsFromDi()),
+    ] })
 export class AppModule {
   constructor() {
     registerLocaleData(de.default);

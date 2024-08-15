@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Observable, Subject, combineLatest, forkJoin, merge, takeUntil } from 'rxjs';
 import { CategoryTransactions, Transaction, TransactionList } from '../transaction/transaction';
 import { CategoryService } from '../category/category.service';

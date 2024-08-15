@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Transaction, TransactionList } from './transaction';
-import * as moment from 'moment';
+import { TransactionList } from './transaction';
+import moment from 'moment';
 
 @Injectable({
   providedIn: 'root'
