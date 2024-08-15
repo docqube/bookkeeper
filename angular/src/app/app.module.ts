@@ -10,20 +10,27 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import * as de from '@angular/common/locales/de';
 import { registerLocaleData } from '@angular/common';
 
-@NgModule({ declarations: [
-        AppComponent
-    ],
-    bootstrap: [AppComponent], imports: [SharedModule.forRoot(),
-        BrowserModule,
-        AppRoutingModule,
-        BrowserAnimationsModule,
-        DashboardModule], providers: [
-        {
-            provide: LOCALE_ID,
-            useValue: 'de-DE'
-        },
-        provideHttpClient(withInterceptorsFromDi()),
-    ] })
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  bootstrap: [
+    AppComponent
+  ],
+  imports: [
+    SharedModule.forRoot(),
+    BrowserModule,
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    DashboardModule],
+  providers: [
+    {
+      provide: LOCALE_ID,
+      useValue: 'de-DE'
+    },
+    provideHttpClient(withInterceptorsFromDi()),
+  ]
+})
 export class AppModule {
   constructor() {
     registerLocaleData(de.default);
