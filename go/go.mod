@@ -3,7 +3,7 @@ module docqube.de/bookkeeper
 go 1.22.6
 
 require (
-	github.com/gin-contrib/gzip v0.0.6
+	github.com/gin-contrib/gzip v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/knadh/koanf/providers/confmap v0.1.0
