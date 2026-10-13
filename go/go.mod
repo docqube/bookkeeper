@@ -1,6 +1,6 @@
 module docqube.de/bookkeeper
 
-go 1.22.6
+go 1.25.0
 
 require (
 	github.com/gin-contrib/gzip v0.0.6
@@ -11,7 +11,7 @@ require (
 	github.com/knadh/koanf/v2 v2.1.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/text v0.17.0
+	golang.org/x/text v0.37.0
 )
 
 require (
@@ -45,9 +45,9 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
